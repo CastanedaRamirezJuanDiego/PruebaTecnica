@@ -1,0 +1,125 @@
+<main class="kanban-page">
+  <header class="page-header">
+    <h1>Tablero Kanban</h1>
+  </header>
+
+  <section class="task-form-section" aria-labelledby="new-task-title">
+    <h2 id="new-task-title">Nueva tarea</h2>
+
+    <form class="task-form" [formGroup]="taskForm" (ngSubmit)="createTask()">
+      <label>
+        Titulo
+        <input type="text" formControlName="title" />
+      </label>
+
+      @if (taskForm.controls.title.touched && taskForm.controls.title.invalid) {
+        <p class="field-error">El titulo es requerido.</p>
+      }
+
+      <label>
+        Descripcion
+        <textarea rows="2" formControlName="description"></textarea>
+      </label>
+
+      <div class="form-row">
+        <label>
+          Complejidad
+          <input type="number" min="1" formControlName="complexity" />
+        </label>
+
+        <label>
+          Urgencia
+          <input type="number" min="1" formControlName="urgency" />
+        </label>
+
+        <label>
+          Estado
+          <select formControlName="status">
+            <option value="todo">Todo</option>
+            <option value="doing">Doing</option>
+            <option value="done">Done</option>
+          </select>
+        </label>
+      </div>
+
+      <button type="submit" [disabled]="store.saving()">Crear tarea</button>
+    </form>
+  </section>
+
+  @if (store.error()) {
+    <p class="error-message">{{ store.error() }}</p>
+  }
+
+  @if (store.loading()) {
+    <p class="status-message">Cargando tareas...</p>
+  } @else {
+    <section class="board" aria-label="Tareas por estado">
+      <article class="column">
+        <h2>Todo ({{ store.todoTasks().length }})</h2>
+
+        @for (task of store.todoTasks(); track task.id) {
+          <ng-container [ngTemplateOutlet]="taskCard" [ngTemplateOutletContext]="{ task: task }" />
+        } @empty {
+          <p class="empty-message">Sin tareas.</p>
+        }
+      </article>
+
+      <article class="column">
+        <h2>Doing ({{ store.doingTasks().length }})</h2>
+
+        @for (task of store.doingTasks(); track task.id) {
+          <ng-container [ngTemplateOutlet]="taskCard" [ngTemplateOutletContext]="{ task: task }" />
+        } @empty {
+          <p class="empty-message">Sin tareas.</p>
+        }
+      </article>
+
+      <article class="column">
+        <h2>Done ({{ store.doneTasks().length }})</h2>
+
+        @for (task of store.doneTasks(); track task.id) {
+          <ng-container [ngTemplateOutlet]="taskCard" [ngTemplateOutletContext]="{ task: task }" />
+        } @empty {
+          <p class="empty-message">Sin tareas.</p>
+        }
+      </article>
+    </section>
+  }
+</main>
+
+<ng-template #taskCard let-task="task">
+  <div class="task-card">
+    <h3>{{ task.title }}</h3>
+
+    @if (task.description) {
+      <p>{{ task.description }}</p>
+    }
+
+    <dl>
+      <div>
+        <dt>Complejidad</dt>
+        <dd>{{ task.complexity }}</dd>
+      </div>
+      <div>
+        <dt>Urgencia</dt>
+        <dd>{{ task.urgency }}</dd>
+      </div>
+      <div>
+        <dt>Score</dt>
+        <dd>{{ task.priority_score }}</dd>
+      </div>
+    </dl>
+
+    <div class="move-actions" aria-label="Mover tarea">
+      <button type="button" [disabled]="task.status === 'todo'" (click)="moveTask(task, 'todo')">
+        Mover a Todo
+      </button>
+      <button type="button" [disabled]="task.status === 'doing'" (click)="moveTask(task, 'doing')">
+        Mover a Doing
+      </button>
+      <button type="button" [disabled]="task.status === 'done'" (click)="moveTask(task, 'done')">
+        Mover a Done
+      </button>
+    </div>
+  </div>
+</ng-template>
